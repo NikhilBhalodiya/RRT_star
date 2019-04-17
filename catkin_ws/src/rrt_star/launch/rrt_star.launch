@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+    <!--Fake Turtlebot
+    <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+    <param name="tb3_model" value="$(arg model)"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+      <param name="publish_frequency" type="double" value="50.0" />
+    </node>-->
+
+    <!--Rviz-->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rrt_star)/rviz/tbot3.rviz"/>
+
+    <!-- Map server -->
+    <node pkg="map_server" name="map_server" type="map_server" args="$(find rrt_star)/maps/Suraj_home.yaml"/>
+
+    <node name="rrt_star_node" pkg="rrt_star" type="rrt_star_node" output="screen">
+        <rosparam command="load" file="$(find rrt_star)/params/rrt_star_params.yaml"/>
+    </node>
+</launch>
