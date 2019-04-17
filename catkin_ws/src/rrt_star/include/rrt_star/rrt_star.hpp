@@ -4,6 +4,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_listener.h>
 #include <rrt_star_types.hpp>
+#include <nav_msgs/Path.h>
 
 namespace RRT {
 
@@ -24,11 +25,26 @@ namespace RRT {
         void planPath();
         void generateRandomPoint();
         void drawStartAndGoal();
+        void expandtree();
+        void findNearestNode();
+        void expandNearestNode();
+        void printCurrentStatus();
+        bool checkIfItsGoal();
+        void backTraceThePath();
+        void printFinalPath();
+        void publishPath();
 
-        int i = 0;
+
+
+        std::vector<TreeNode> path_of_nodes;
+
+        int i;
 
         bool m_have_map;
         bool m_have_current_pose;
+        bool once_flag=true;
+        bool first_time= false;
+        bool end_planning = false;
         
         int max_x_dist;
         int max_y_dist;
@@ -40,9 +56,38 @@ namespace RRT {
         int goal_grid_x;
         int goal_grid_y;
         double Randomdouble(double a, double b);
+        double dist_to_random_point;
+        double euclidean_distance;
+
+        double step_distance = 0.7;
+        double rand_pose_x;
+        double rand_pose_y;
+        double new_node_x;
+        double new_node_y;
+
+        int rand_grid_pose_x;
+        int rand_grid_pose_y;
+
+        int new_node_grid_x;
+        int new_node_grid_y;
+
+        double node_num;
 
 
-        std::vector<TreeNode> Tree_nodes;
+
+//      std::vector<TreeNode> Tree_nodes;
+        std::vector<TreeNode> open_nodes;
+        std::vector<TreeNode> close_nodes;
+        std::map<int, TreeNode> Tree_nodes;
+
+
+        TreeNode Nearest_node;
+        TreeNode start;
+        TreeNode goal;
+        TreeNode newNode;
+        TreeNode tempNode;
+
+        double dist_to_goal;
 
 
         nav_msgs::OccupancyGrid::ConstPtr m_map;
