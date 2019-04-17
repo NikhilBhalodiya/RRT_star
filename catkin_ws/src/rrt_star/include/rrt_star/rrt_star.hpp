@@ -18,6 +18,7 @@ namespace RRT {
         ros::Subscriber m_map_sub;
         ros::Subscriber m_goal_sub;
         ros::Publisher m_map_pub;
+        ros::Publisher m_path_pub;
 
         void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
         void GoalPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
@@ -59,7 +60,7 @@ namespace RRT {
         double dist_to_random_point;
         double euclidean_distance;
 
-        double step_distance = 0.7;
+        double step_distance = 0.1;
         double rand_pose_x;
         double rand_pose_y;
         double new_node_x;

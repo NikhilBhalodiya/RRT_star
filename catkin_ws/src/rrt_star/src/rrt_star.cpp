@@ -7,6 +7,7 @@ RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     m_map_sub = nh.subscribe<nav_msgs::OccupancyGrid>("/map", 10, &RRTStar::mapCallback, this);
     m_goal_sub = nh.subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 10, &RRTStar::GoalPoseCallback, this);
     m_map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/map_new",10);
+    m_path_pub = nh.advertise<nav_msgs::Path>("/global_path", 10);
 
     getStartParam();
     std::srand(ros::Time::now().toSec());
@@ -194,28 +195,7 @@ bool RRTStar::checkIfItsGoal()
 
 void RRTStar::backTraceThePath()
 {
-//    temp_node_num = roadMap[goal.id].parent_id;
-//    path_id.push_back(goal.id);
-//    //untill the node has node_num and parent_id same                                                     ROS_ERROR("Parent_id of Node %d is %d", goal.id, temp_node_num );
-//    while(temp_node_num != roadMap[temp_node_num].parent_id)
-//    {                                                   ROS_ERROR("Parent_id of Node %d is %d", temp_node_num, roadMap[temp_node_num].parent_id );
-//         path_id.push_back(temp_node_num);
-//         temp_node_num = roadMap[temp_node_num].parent_id;
-//    }
-//    path_id.push_back(temp_node_num);
 
-    ////////////////////////////////////////////
-
-//    std::vector<GraphNode> reverse_trajectory;
-//    GraphNode current_node = m_frontier.top();
-//    while(current_node.parent_id != 0)
-//    {
-//        reverse_trajectory.push_back(current_node);
-//        current_node = m_nodes[current_node.parent_id];
-//    }
-//    pubTrajectory(interpolateTrajectory(reverseTrajectory(reverse_trajectory)));
-
-    //////////////////////////////////////////////////////////
      tempNode = *goal.parent_node;
      path_of_nodes.push_back(goal);
      ROS_INFO("goal is now temp node and its id %d ",goal.node_id);
@@ -228,23 +208,6 @@ void RRTStar::backTraceThePath()
      ROS_INFO("6");
 //     path_of_nodes.push_back(start);
      printFinalPath();
-
-    /////////////////////////////////////////////////////////
-    //    tempNode = *goal.parent_node;
-//    path_of_nodes.push_back(goal);
-//    ROS_INFO("goal>>x_coords y_coords %IF %IF",goal.x_coordinate,goal.y_coordinate);
-//    while(&tempNode != tempNode.parent_node)
-//    {
-//        path_of_nodes.push_back(tempNode);
-//        ROS_INFO("temp node>>x_coords y_coords %IF %IF",tempNode.x_coordinate,tempNode.y_coordinate);
-
-//        tempNode = *tempNode.parent_node;
-//    }
-//    ROS_INFO("6");
-//    path_of_nodes.push_back(tempNode);
-//    ROS_INFO("7");
-//    printFinalPath();
-
 }
 
 
@@ -259,20 +222,23 @@ void RRTStar::printFinalPath()
 
 void RRTStar::publishPath()
 {
-//    nav_msgs::Path path;
+    nav_msgs::Path path;
 //    path.header.stamp = m_goal_pose.header.stamp;
-//    path.header.frame_id = "/map";
-//    for(int traj_it = 0; traj_it < traj.size(); traj_it++)
-//    {
+    path.header.frame_id = "/map";
+    for(int traj_it = 0; traj_it < path_of_nodes.size(); traj_it++)
+    {
 //        const double &x = traj[traj_it].child_point.x;
 //        const double &y = traj[traj_it].child_point.y;
-//        geometry_msgs::PoseStamped pose;
-//        pose.pose.position.x = x;
-//        pose.pose.position.y = y;
-//        path.poses.push_back(pose);
-//    }
+        double x = path_of_nodes[traj_it].x_coordinate;
+        double y = path_of_nodes[traj_it].y_coordinate;
+
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.x = x - 10.0;
+        pose.pose.position.y = y - 10.0;
+        path.poses.push_back(pose);
+    }
 //    path.poses.back().pose.orientation = tf::createQuaternionMsgFromYaw(m_goal_pose.heading);
-//    m_path_pub.publish(path);
+    m_path_pub.publish(path);
 }
 
 void RRTStar::expandtree()
