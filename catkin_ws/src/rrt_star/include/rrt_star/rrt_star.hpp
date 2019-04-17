@@ -34,6 +34,7 @@ namespace RRT {
         void backTraceThePath();
         void printFinalPath();
         void publishPath();
+        bool checkIfThereIsObstacle();
 
 
 
@@ -60,7 +61,7 @@ namespace RRT {
         double dist_to_random_point;
         double euclidean_distance;
 
-        double step_distance = 0.1;
+        double step_distance = 0.5;
         double rand_pose_x;
         double rand_pose_y;
         double new_node_x;
@@ -73,6 +74,8 @@ namespace RRT {
         int new_node_grid_y;
 
         double node_num;
+        double angle;
+
 
 
 

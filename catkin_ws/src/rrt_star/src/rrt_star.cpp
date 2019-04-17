@@ -40,7 +40,7 @@ void RRTStar::drawStartAndGoal()
     goal.x_coordinate = m_goal_pose.pose.position.x+10;
     goal.y_coordinate = m_goal_pose.pose.position.y+10;
     m_map_pub.publish(m_map_new);
-//    ROS_INFO("Start and Goal published");
+//  ROS_INFO("Start and Goal published");
 }
 
 void RRTStar::generateRandomPoint()
@@ -62,7 +62,7 @@ void RRTStar::generateRandomPoint()
 
     if(m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] == 0)
     {
-//        ROS_INFO("Is In free space %d %d",rand_grid_pose_x,rand_grid_pose_y);
+//      ROS_INFO("Is In free space %d %d",rand_grid_pose_x,rand_grid_pose_y);
         m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 100;
         m_map_pub.publish(m_map_new);
 
@@ -76,22 +76,13 @@ void RRTStar::generateRandomPoint()
 
 }
 
-void RRTStar::printCurrentStatus()
+void RRTStar::expandtree()
 {
-    ROS_INFO("OPEN NODES");
-    for (auto const& i: open_nodes) {
-                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
-            }
-    ROS_INFO("Close NODes");
-    for (auto const& i: close_nodes) {
-                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
-            }
-//    ROS_INFO("Tree Nodes");
-//    for (auto const& i: Tree_nodes) {
-//                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
-//            }
-
+//   ROS_INFO("expandtree initiated");
+   findNearestNode();
+   expandNearestNode();
 }
+
 
 void RRTStar::findNearestNode()
 {
@@ -121,7 +112,7 @@ euclidean_distance = 0;
 void RRTStar::expandNearestNode()
 {
 //   ROS_INFO("expanding Nearest Node");
-   double angle = atan2(Nearest_node.y_coordinate - rand_pose_y,Nearest_node.x_coordinate - rand_pose_x);
+   angle = atan2(Nearest_node.y_coordinate - rand_pose_y,Nearest_node.x_coordinate - rand_pose_x);
    new_node_x = Nearest_node.x_coordinate + step_distance*cos(angle);
    new_node_y = Nearest_node.y_coordinate + step_distance*sin(angle);
 
@@ -141,7 +132,11 @@ void RRTStar::expandNearestNode()
    {
        return;
    }
-
+   if(checkIfThereIsObstacle())
+   {
+       ROS_INFO("oooooooooooooooooooooooooooooooooo");
+       generateRandomPoint();
+   }
 
    if(m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] == 0)
    {
@@ -169,6 +164,33 @@ void RRTStar::expandNearestNode()
 //     ROS_INFO("New node in obstacle");
        generateRandomPoint();
    }
+
+}
+
+bool RRTStar::checkIfThereIsObstacle()
+{
+    ROS_INFO("checking before making");
+    double ray_dist = step_distance;   // find the minimum ray_dist and put it instead of zero
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    for(double inc = 0.05; inc<=ray_dist ; inc+=0.05)
+    {
+//        ROS_INFO("inc %IF",inc);
+        double check_x = new_node_x + inc* cos(angle);
+        double check_y = new_node_y + inc* sin(angle);
+
+        int check_grid_x = int(new_node_x/m_map_new.info.resolution);
+        int check_grid_y = int(new_node_y/m_map_new.info.resolution);
+        if(check_grid_x != new_node_grid_x && check_grid_y != new_node_grid_y)
+        {
+            if(m_map_new.data[check_grid_y*m_map->info.width + check_grid_x] == 100)
+            {
+                ROS_INFO("obstacles inbetween");
+                return 1;
+            }
+        }
+    }
+    return 0;
 
 }
 
@@ -241,15 +263,6 @@ void RRTStar::publishPath()
     m_path_pub.publish(path);
 }
 
-void RRTStar::expandtree()
-{
-//   ROS_INFO("expandtree initiated");
-   findNearestNode();
-   expandNearestNode();
-//   m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 0;
-//   m_map_pub.publish(m_map_new);
-
-}
 
 double RRTStar::Randomdouble(double a, double b)
 {
@@ -269,6 +282,24 @@ void RRTStar::getStartParam()
   m_have_current_pose = true;
    ROS_INFO("3");
 }
+
+void RRTStar::printCurrentStatus()
+{
+    ROS_INFO("OPEN NODES");
+    for (auto const& i: open_nodes) {
+                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
+            }
+    ROS_INFO("Close NODes");
+    for (auto const& i: close_nodes) {
+                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
+            }
+//    ROS_INFO("Tree Nodes");
+//    for (auto const& i: Tree_nodes) {
+//                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
+//            }
+
+}
+
 
 void RRTStar::mapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 {

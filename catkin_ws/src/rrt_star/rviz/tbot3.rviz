@@ -105,7 +105,7 @@ Visualization Manager:
       Value: false
     - Alpha: 0.699999988
       Class: rviz/Map
-      Color Scheme: costmap
+      Color Scheme: map
       Draw Behind: false
       Enabled: true
       Name: Map
@@ -170,7 +170,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 111.169373
+      Scale: 140.618652
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: -0.0560924746
