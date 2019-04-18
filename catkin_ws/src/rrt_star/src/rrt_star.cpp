@@ -19,10 +19,10 @@ void RRTStar::planPath()
 {
 //ROS_INFO("Path planning has been started");
  drawStartAndGoal();
-    while(!end_planning)
-    {
-    generateRandomPoint();
-    }
+ while(!end_planning)
+ {
+ generateRandomPoint();
+ }
 }
 
 void RRTStar::drawStartAndGoal()
@@ -44,7 +44,7 @@ void RRTStar::drawStartAndGoal()
 
 void RRTStar::generateRandomPoint()
 {
- //    max_x_dist = (m_map->info.width*m_map->info.resolution) - 6;
+//    max_x_dist = (m_map->info.width*m_map->info.resolution) - 6;
 //    min_x_dist = (m_map->info.width*m_map->info.resolution) - 10;
 //    max_y_dist = (m_map->info.height*m_map->info.resolution) - 6;
 //    min_y_dist = (m_map->info.height*m_map->info.resolution) - 11;
@@ -66,6 +66,7 @@ void RRTStar::generateRandomPoint()
         m_map_pub.publish(m_map_new);
 
         expandtree();
+
     }
     else
     {
@@ -81,17 +82,19 @@ void RRTStar::expandtree()
    expandNearestNode();
 }
 
+
 void RRTStar::findNearestNode()
 {
 //    ROS_INFO("Open_nodes size  %d",open_nodes.size());
 
 dist_to_random_point = INFINITY;
 euclidean_distance = 0;
-//ROS_INFO("open_nodes size %d",open_nodes.size());
+
+ROS_INFO("started finding Nearest node");
+
   for(const auto &check_node : open_nodes)
   {
      euclidean_distance = std::sqrt(std::pow(rand_pose_x-check_node.x_coordinate,2) + std::pow(rand_pose_y-check_node.y_coordinate,2));
-
      if(dist_to_random_point > euclidean_distance)
      {
          dist_to_random_point = euclidean_distance;
@@ -100,32 +103,24 @@ euclidean_distance = 0;
          Nearest_node.parent_node = check_node.parent_node;
          Nearest_node.node_id = check_node.node_id;
          Nearest_node.parent_id = check_node.parent_id;
-//       ROS_INFO("Nearest Node is %IF %IF %IF",Nearest_node.x_coordinate,Nearest_node.y_coordinate,dist_to_random_point);
+//         ROS_INFO("Nearest Node is %IF %IF %IF",Nearest_node.x_coordinate,Nearest_node.y_coordinate,dist_to_random_point);
      }
   }
-
-  Nearest_node_grid_x = int(Nearest_node.x_coordinate/m_map->info.resolution);
-  Nearest_node_grid_y = int(Nearest_node.y_coordinate/m_map->info.resolution);
 }
 
 void RRTStar::expandNearestNode()
 {
 // ROS_INFO("expanding Nearest Node");
-   angle = atan2(Nearest_node.y_coordinate - rand_pose_y,Nearest_node.x_coordinate - rand_pose_x);
-   if(checkIfThereIsObstacle())
-   {
-//       ROS_INFO("oooooooooooooooooooooooooooooooooo");
-       generateRandomPoint();
-//       return;
-   }
-
+   angle = atan2(rand_pose_y - Nearest_node.y_coordinate ,rand_pose_x - Nearest_node.x_coordinate);
    new_node_x = Nearest_node.x_coordinate + step_distance*cos(angle);
    new_node_y = Nearest_node.y_coordinate + step_distance*sin(angle);
 
    new_node_grid_x = int(new_node_x/m_map->info.resolution);
    new_node_grid_y = int(new_node_y/m_map->info.resolution);
 
-//   TreeNode newNode(new_node_x,new_node_y);
+//   ROS_INFO("%d %d",new_node_grid_x,new_node_grid_y);
+
+   //   TreeNode newNode(new_node_x,new_node_y);
    node_num++;
    newNode.node_id = int(node_num);
    newNode.parent_id = Nearest_node.node_id;
@@ -136,67 +131,106 @@ void RRTStar::expandNearestNode()
    {
        return;
    }
-
-   if(m_map_new.data[(m_map->info.width*new_node_grid_y) + (new_node_grid_x)] == 0)
+   if(checkIfThereIsObstacle())
    {
-//     ROS_INFO("New_node In free space x y are %d %d",new_node_grid_x,new_node_grid_y);
-       m_map_new.data[(m_map->info.width*rand_grid_pose_y) + (rand_grid_pose_x)] = 0;
-       m_map_new.data[(m_map->info.width*new_node_grid_y) + (new_node_grid_x)] = 100;
+       generateRandomPoint();
+   }
+
+   if(m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] == 0)
+   {
+
+//       ROS_INFO("New_node In free space x y are %d %d",new_node_grid_x,new_node_grid_y);
+       m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] = 100;
+       m_map_pub.publish(m_map_new);
+       ros::Duration(0.05).sleep();
+       m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 0;
        m_map_pub.publish(m_map_new);
 
-//    const std::vector<TreeNode>::iterator &it = std::find(open_nodes.begin(), open_nodes.end(), Nearest_node);
-//    open_nodes.erase(it);
-//    ROS_INFO("new_node X y %IF %IF",newNode.x_coordinate,newNode.y_coordinate);
-//      ROS_INFO("new node generated with id and node Num %d %IF",newNode.node_id,node_num);
+//      ROS_INFO("new node x y %IF %IF generated with id and node Num %d %IF ",new_node_x,new_node_y, newNode.node_id,node_num);
 
-//    close_nodes.push_back(Nearest_node);
+//      close_nodes.push_back(Nearest_node);
+
       open_nodes.push_back(newNode);
       Tree_nodes.insert({int(node_num),newNode});
-//    printCurrentStatus();
    }
    else
    {
-       m_map_new.data[(m_map->info.width*rand_grid_pose_y) + (rand_grid_pose_x)] = 0;
+       m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 0;
        m_map_pub.publish(m_map_new);
 //     ROS_INFO("New node in obstacle");
        generateRandomPoint();
-   }  
+   }
+
 }
 
 bool RRTStar::checkIfThereIsObstacle()
 {
-//    ROS_INFO("checking before making");
-    double ray_dist = step_distance;
+//  ROS_INFO("checking before making");
+    double ray_dist = step_distance;   // find the minimum ray_dist and put it instead of zero
 
     for(double inc = 0.05; inc<=ray_dist ; inc+=0.05)
     {
-//      ROS_INFO("inc %IF",inc);
-        double check_x = Nearest_node.x_coordinate + inc*cos(angle);
-        double check_y = Nearest_node.y_coordinate + inc*sin(angle);
+//        ROS_INFO("inc %IF",inc);
+        double check_x = new_node_x + inc* cos(angle);
+        double check_y = new_node_y + inc* sin(angle);
 
-        int check_grid_x = int(check_x/m_map->info.resolution);
-        int check_grid_y = int(check_y/m_map->info.resolution);
-
-        if((check_grid_x != Nearest_node_grid_x) && (check_grid_y != Nearest_node_grid_y))
+        int check_grid_x = int(check_x/m_map_new.info.resolution);
+        int check_grid_y = int(check_y/m_map_new.info.resolution);
+        if(check_grid_x != new_node_grid_x && check_grid_y != new_node_grid_y)
         {
-            if(m_map_new.data[(check_grid_y*m_map->info.width) + (check_grid_x)] == 100)
+            if(m_map_new.data[check_grid_y*m_map->info.width + check_grid_x] == 100)
             {
-                ROS_INFO("obstacles inbetween");
-                return true;
+//                ROS_INFO("obstacles");
+                return 1;
             }
         }
     }
-    return false;
+    return 0;
+
+}
+bool RRTStar::checkIFGoalIsVisible()
+{
+      // find the minimum ray_dist and put it instead of zero
+    /////////////////////////////////////////////////////////////////////////////////////////
+    double angleToGoal = atan2(goal.y_coordinate - new_node_y, goal.x_coordinate - new_node_x);
+
+    for(double inc = 0.05; inc<=goal_buffer ; inc+=0.05)
+    {
+        double check_x = new_node_x + inc* cos(angleToGoal);
+        double check_y = new_node_y + inc* sin(angleToGoal);
+
+        int check_grid_x = int(check_x/m_map_new.info.resolution);
+        int check_grid_y = int(check_y/m_map_new.info.resolution);
+        if(check_grid_x != new_node_grid_x && check_grid_y != new_node_grid_y)
+        {
+//            ROS_INFO("new node to goal one step clear");
+            if(m_map_new.data[check_grid_y*m_map->info.width + check_grid_x] == 100)
+            {
+                ROS_INFO("obstacles inbetween");
+                return 1;
+            }
+        }
+    }
+    return 0;
+
 }
 
 bool RRTStar::checkIfItsGoal()
 {
+    if(checkIFGoalIsVisible())
+    {
+        ROS_INFO("goal is not visible");
+        return false;
+    }
 //    ROS_INFO("new node x y %IF %IF goal x y %IF %IF ",new_node_x,new_node_y,goal.x_coordinate,goal.y_coordinate);
     dist_to_goal = std::sqrt(std::pow(new_node_x - goal.x_coordinate,2) + std::pow(new_node_y - goal.y_coordinate,2));
-    ROS_INFO("dist to goal %IF",dist_to_goal);
-    if(dist_to_goal <= 0.4)
+
+
+
+    if(dist_to_goal <= goal_buffer)
     {
-//        ROS_INFO("Last_node near goal x y %IF %IF",newNode.x_coordinate,newNode.y_coordinate);
+        ROS_INFO("Last_node near goal x y %IF %IF",newNode.x_coordinate,newNode.y_coordinate);
+
         ROS_INFO("GGGGGGGOOOOOOOOOOOOOOOOOOOAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLl");
         goal.node_id = int(node_num)+1;
         goal.parent_id = int(node_num);
@@ -214,14 +248,13 @@ void RRTStar::backTraceThePath()
 
      tempNode = *goal.parent_node;
      path_of_nodes.push_back(goal);
-     ROS_INFO("goal is now temp node and its id %d ",goal.node_id);
+//     ROS_INFO("goal is now temp node and its id %d ",goal.node_id);
      while(tempNode.parent_id != 0)
      {
 //         ROS_INFO("temp_node parent id %d ",tempNode.parent_id);
          path_of_nodes.push_back(tempNode);
          tempNode = Tree_nodes[tempNode.parent_id];  //    *tempNode.parent_node;
      }
-     ROS_INFO("6");
 //     path_of_nodes.push_back(start);
      printFinalPath();
 }
@@ -229,9 +262,9 @@ void RRTStar::backTraceThePath()
 
 void RRTStar::printFinalPath()
 {
-    ROS_INFO("Final Path");
+//    ROS_INFO("Final Path");
     for (auto const& i: path_of_nodes) {
-                    ROS_INFO("node id is %d and its parent is %d,",i.node_id,i.parent_id);
+//                    ROS_INFO("node id is %d and its parent is %d,",i.node_id,i.parent_id);
             }
     publishPath();
 }
@@ -281,12 +314,12 @@ void RRTStar::printCurrentStatus()
 {
     ROS_INFO("OPEN NODES");
     for (auto const& i: open_nodes) {
-                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
+                    ROS_INFO("%IF %IF, ",i.x_coordinate,i.y_coordinate);
             }
-    ROS_INFO("Close NODes");
-    for (auto const& i: close_nodes) {
-                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
-            }
+//    ROS_INFO("Close NODes");
+//    for (auto const& i: close_nodes) {
+//                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
+//            }
 //    ROS_INFO("Tree Nodes");
 //    for (auto const& i: Tree_nodes) {
 //                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
