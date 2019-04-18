@@ -61,7 +61,7 @@ namespace RRT {
         double dist_to_random_point;
         double euclidean_distance;
 
-        double step_distance = 0.5;
+        double step_distance = 0.15;
         double rand_pose_x;
         double rand_pose_y;
         double new_node_x;
@@ -69,6 +69,9 @@ namespace RRT {
 
         int rand_grid_pose_x;
         int rand_grid_pose_y;
+
+        int Nearest_node_grid_x;
+        int Nearest_node_grid_y;
 
         int new_node_grid_x;
         int new_node_grid_y;
