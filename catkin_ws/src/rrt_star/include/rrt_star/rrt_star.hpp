@@ -26,7 +26,6 @@ namespace RRT {
         void planPath();
         void generateRandomPoint();
         void drawStartAndGoal();
-        void expandtree();
         void findNearestNode();
         void expandNearestNode();
         void printCurrentStatus();
@@ -40,6 +39,16 @@ namespace RRT {
         void getBestParent();
         double distanceBetween(const TreeNode &a, const TreeNode &b);
         void reWireTheTree();
+        void initiateStartGoalNode();
+        bool isInFreeSpace(TreeNode node);
+        void addPointToMap(TreeNode node);
+        void createNearestNode(TreeNode check_node);
+        double angleBetween(TreeNode a, TreeNode b);
+        void createNewNode();
+        void removePointToMap(TreeNode node);
+
+
+
 
 
 
@@ -68,7 +77,7 @@ namespace RRT {
         double euclidean_distance;
         double distance_to_neighbour;
 
-        double step_distance = 0.1;
+        double step_distance = 0.05;
         double rand_pose_x;
         double rand_pose_y;
         double new_node_x;
@@ -82,7 +91,7 @@ namespace RRT {
         int new_node_grid_x;
         int new_node_grid_y;
 
-        double node_num = 1;
+        double node_num;
         double angle;
         double goal_buffer = 0.1;
 
@@ -101,6 +110,7 @@ namespace RRT {
         TreeNode goal;
         TreeNode newNode;
         TreeNode tempNode;
+        TreeNode randomNode;
 
         TreeNode best_parent_node;
 
