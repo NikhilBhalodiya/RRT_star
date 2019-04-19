@@ -159,12 +159,12 @@ void RRTStar::expandNearestNode()
        m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 0;
        m_map_pub.publish(m_map_new);
 
-       getNeighboursInKRadius();
-       getBestParent();
-       newNode.parent_node = &best_parent_node;
-       newNode.parent_id = best_parent_node.node_id;
-       newNode.cost = best_parent_node.cost + distanceBetween(newNode,best_parent_node);
-       reWireTheTree();
+//       getNeighboursInKRadius();
+//       getBestParent();
+//       newNode.parent_node = &best_parent_node;
+//       newNode.parent_id = best_parent_node.node_id;
+//       newNode.cost = best_parent_node.cost + distanceBetween(newNode,best_parent_node);
+//       reWireTheTree();
        open_nodes.push_back(newNode);
 
        Tree_nodes.insert({int(node_num),newNode});
