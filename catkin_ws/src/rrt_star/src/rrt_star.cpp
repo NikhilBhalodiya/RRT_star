@@ -150,7 +150,6 @@ void RRTStar::expandNearestNode()
        newNode.parent_id = best_parent_node.node_id;
        newNode.cost = best_parent_node.cost + distanceBetween(newNode,best_parent_node);
        reWireTheTree();
-       ROS_INFO("%IF",newNode.cost);
        open_nodes.push_back(newNode);
        Tree_nodes.insert({int(node_num),newNode});
    }
@@ -165,8 +164,19 @@ void RRTStar::expandNearestNode()
 
 void RRTStar::reWireTheTree()
 {
+    for(auto &check_node : node_in_radius)
+    {
+        double newCost = newNode.cost + distanceBetween(newNode,check_node);
+        if(newCost < check_node.cost)
+        {
+            check_node.parent_node = &newNode;
+            check_node.parent_id = newNode.node_id;
+        }
+    }
 
 }
+
+
 double RRTStar::distanceBetween(const TreeNode &a,const TreeNode &b)
 {
   return std::sqrt(std::pow(a.x_coordinate - b.x_coordinate,2) + std::pow(a.y_coordinate - b.y_coordinate,2));
@@ -192,14 +202,12 @@ void RRTStar::getNeighboursInKRadius()
 {
     node_in_radius.clear();
     radius = std::pow((std::log(node_num)/node_num),(1.0/dimention_of_spcae));
+
     for(const auto &check_node : open_nodes)
     {
         distance_to_neighbour =distanceBetween(newNode, check_node);  //std::sqrt(std::pow(newNode.x_coordinate - check_node.x_coordinate,2) + std::pow(newNode.y_coordinate - check_node.y_coordinate,2));
-//        ROS_INFO("dist neigbor %IF from node %d",distance_to_neighbour,check_node.node_id);
         if(distance_to_neighbour < radius)
         {
-//          ROS_INFO("iiiiiiiiiiiiiiiiiiiinnnnnnnnnnnnnnnn %d",check_node.node_id);
-
           node_in_radius.push_back(check_node);
         }
     }
