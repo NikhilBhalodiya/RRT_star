@@ -3,8 +3,8 @@ namespace RRT {
     struct TreeNode
     {
         TreeNode(){}
-        TreeNode(const double x_, const double y_, const int parent_id_):
-                        x_coordinate(x_),y_coordinate(y_),parent_id(parent_id_){}
+//        TreeNode(const double x_, const double y_, const int parent_id_):
+//                        x_coordinate(x_),y_coordinate(y_),parent_id(parent_id_){}
         ~TreeNode(){}
 
         double x_coordinate;

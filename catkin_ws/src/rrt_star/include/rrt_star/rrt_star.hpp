@@ -46,7 +46,7 @@ namespace RRT {
 
         std::vector<TreeNode> path_of_nodes;
 
-        int i;
+        int i = 0;
 
         bool m_have_map;
         bool m_have_current_pose;
@@ -82,7 +82,7 @@ namespace RRT {
         int new_node_grid_x;
         int new_node_grid_y;
 
-        double node_num;
+        double node_num = 1;
         double angle;
         double goal_buffer = 0.1;
 
