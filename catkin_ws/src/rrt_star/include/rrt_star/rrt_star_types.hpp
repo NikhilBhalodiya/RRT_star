@@ -11,6 +11,7 @@ namespace RRT {
         double y_coordinate;
         int parent_id;
         int node_id;
+        double cost;
         TreeNode *parent_node;
 
         bool operator==(const TreeNode &rhs) const

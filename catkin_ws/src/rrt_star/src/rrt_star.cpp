@@ -32,6 +32,7 @@ void RRTStar::drawStartAndGoal()
     TreeNode start(m_current_pose.pose.position.x,m_current_pose.pose.position.y,0);
     start.parent_node = &start;
     start.node_id = 1;
+    start.cost = 0.0;
     open_nodes.push_back(start);
     node_num++;
     Tree_nodes.insert({int(node_num),start});
@@ -90,7 +91,7 @@ void RRTStar::findNearestNode()
 dist_to_random_point = INFINITY;
 euclidean_distance = 0;
 
-ROS_INFO("started finding Nearest node");
+//ROS_INFO("started finding Nearest node");
 
   for(const auto &check_node : open_nodes)
   {
@@ -103,6 +104,7 @@ ROS_INFO("started finding Nearest node");
          Nearest_node.parent_node = check_node.parent_node;
          Nearest_node.node_id = check_node.node_id;
          Nearest_node.parent_id = check_node.parent_id;
+         Nearest_node.cost = check_node.cost;
 //         ROS_INFO("Nearest Node is %IF %IF %IF",Nearest_node.x_coordinate,Nearest_node.y_coordinate,dist_to_random_point);
      }
   }
@@ -118,15 +120,14 @@ void RRTStar::expandNearestNode()
    new_node_grid_x = int(new_node_x/m_map->info.resolution);
    new_node_grid_y = int(new_node_y/m_map->info.resolution);
 
-//   ROS_INFO("%d %d",new_node_grid_x,new_node_grid_y);
-
-   //   TreeNode newNode(new_node_x,new_node_y);
    node_num++;
+//   newNode.cost = Nearest_node.cost + 1.0;
    newNode.node_id = int(node_num);
    newNode.parent_id = Nearest_node.node_id;
    newNode.x_coordinate = new_node_x;
    newNode.y_coordinate = new_node_y;
    newNode.parent_node = Nearest_node.parent_node;
+
    if(checkIfItsGoal())
    {
        return;
@@ -138,24 +139,20 @@ void RRTStar::expandNearestNode()
 
    if(m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] == 0)
    {
-
-//       ROS_INFO("New_node In free space x y are %d %d",new_node_grid_x,new_node_grid_y);
        m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] = 100;
        m_map_pub.publish(m_map_new);
-<<<<<<< HEAD
-//       ros::Duration(0.05).sleep();
-=======
-       ros::Duration(0.05).sleep();
->>>>>>> 37af625706292b5d5836508d6333855bae7e58c7
        m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 0;
        m_map_pub.publish(m_map_new);
 
-//      ROS_INFO("new node x y %IF %IF generated with id and node Num %d %IF ",new_node_x,new_node_y, newNode.node_id,node_num);
-
-//      close_nodes.push_back(Nearest_node);
-
-      open_nodes.push_back(newNode);
-      Tree_nodes.insert({int(node_num),newNode});
+       getNeighboursInKRadius();
+       getBestParent();
+       newNode.parent_node = &best_parent_node;
+       newNode.parent_id = best_parent_node.node_id;
+       newNode.cost = best_parent_node.cost + distanceBetween(newNode,best_parent_node);
+       reWireTheTree();
+       ROS_INFO("%IF",newNode.cost);
+       open_nodes.push_back(newNode);
+       Tree_nodes.insert({int(node_num),newNode});
    }
    else
    {
@@ -164,7 +161,48 @@ void RRTStar::expandNearestNode()
 //     ROS_INFO("New node in obstacle");
        generateRandomPoint();
    }
+}
 
+void RRTStar::reWireTheTree()
+{
+
+}
+double RRTStar::distanceBetween(const TreeNode &a,const TreeNode &b)
+{
+  return std::sqrt(std::pow(a.x_coordinate - b.x_coordinate,2) + std::pow(a.y_coordinate - b.y_coordinate,2));
+}
+
+
+void RRTStar::getBestParent()
+{
+   double min_cost = INFINITY;
+
+    for(const auto &check_node : node_in_radius)
+    {
+        if(check_node.cost < min_cost)
+        {
+            best_parent_node = check_node;
+        }
+    }
+
+}
+
+
+void RRTStar::getNeighboursInKRadius()
+{
+    node_in_radius.clear();
+    radius = std::pow((std::log(node_num)/node_num),(1.0/dimention_of_spcae));
+    for(const auto &check_node : open_nodes)
+    {
+        distance_to_neighbour =distanceBetween(newNode, check_node);  //std::sqrt(std::pow(newNode.x_coordinate - check_node.x_coordinate,2) + std::pow(newNode.y_coordinate - check_node.y_coordinate,2));
+//        ROS_INFO("dist neigbor %IF from node %d",distance_to_neighbour,check_node.node_id);
+        if(distance_to_neighbour < radius)
+        {
+//          ROS_INFO("iiiiiiiiiiiiiiiiiiiinnnnnnnnnnnnnnnn %d",check_node.node_id);
+
+          node_in_radius.push_back(check_node);
+        }
+    }
 }
 
 bool RRTStar::checkIfThereIsObstacle()
@@ -210,7 +248,7 @@ bool RRTStar::checkIFGoalIsVisible()
 //            ROS_INFO("new node to goal one step clear");
             if(m_map_new.data[check_grid_y*m_map->info.width + check_grid_x] == 100)
             {
-                ROS_INFO("obstacles inbetween");
+//                ROS_INFO("obstacles inbetween");
                 return 1;
             }
         }
@@ -223,7 +261,7 @@ bool RRTStar::checkIfItsGoal()
 {
     if(checkIFGoalIsVisible())
     {
-        ROS_INFO("goal is not visible");
+//        ROS_INFO("goal is not visible");
         return false;
     }
 //    ROS_INFO("new node x y %IF %IF goal x y %IF %IF ",new_node_x,new_node_y,goal.x_coordinate,goal.y_coordinate);
@@ -239,7 +277,8 @@ bool RRTStar::checkIfItsGoal()
         goal.node_id = int(node_num)+1;
         goal.parent_id = int(node_num);
         goal.parent_node = &newNode;
-        ROS_INFO("1");
+        goal.cost = newNode.cost;
+        ROS_INFO("goal cost is %IF",goal.cost);
         backTraceThePath();
         end_planning = true;
         return true;
@@ -316,14 +355,14 @@ void RRTStar::getStartParam()
 
 void RRTStar::printCurrentStatus()
 {
-    ROS_INFO("OPEN NODES");
-    for (auto const& i: open_nodes) {
-                    ROS_INFO("%IF %IF, ",i.x_coordinate,i.y_coordinate);
-            }
-//    ROS_INFO("Close NODes");
-//    for (auto const& i: close_nodes) {
-//                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
+//    ROS_INFO("OPEN NODES");
+//    for (auto const& i: open_nodes) {
+//                    ROS_INFO("%d, ",i.node_id);
 //            }
+    ROS_INFO("Node in Radius");
+    for (auto const& i: node_in_radius) {
+                    ROS_INFO("%d,",i.node_id);
+            }
 //    ROS_INFO("Tree Nodes");
 //    for (auto const& i: Tree_nodes) {
 //                    ROS_INFO("%IF %IF,",i.x_coordinate,i.y_coordinate);
@@ -365,7 +404,7 @@ void RRTStar::GoalPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
        {
          for(int k = 0; k<1000; k++)
          {
-        generateRandomPoint();
+//        generateRandomPoint();
          }
        }
     }

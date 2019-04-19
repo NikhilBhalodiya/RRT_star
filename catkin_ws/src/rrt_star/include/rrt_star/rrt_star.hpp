@@ -36,6 +36,11 @@ namespace RRT {
         void publishPath();
         bool checkIfThereIsObstacle();
         bool checkIFGoalIsVisible();
+        void getNeighboursInKRadius();
+        void getBestParent();
+        double distanceBetween(const TreeNode &a, const TreeNode &b);
+        void reWireTheTree();
+
 
 
 
@@ -61,12 +66,15 @@ namespace RRT {
         double Randomdouble(double a, double b);
         double dist_to_random_point;
         double euclidean_distance;
+        double distance_to_neighbour;
 
-        double step_distance = 0.2;
+        double step_distance = 0.1;
         double rand_pose_x;
         double rand_pose_y;
         double new_node_x;
         double new_node_y;
+        int dimention_of_spcae = 2;
+        double radius;
 
         int rand_grid_pose_x;
         int rand_grid_pose_y;
@@ -76,7 +84,7 @@ namespace RRT {
 
         double node_num;
         double angle;
-        double goal_buffer = 0.7;
+        double goal_buffer = 0.1;
 
 
 
@@ -85,12 +93,16 @@ namespace RRT {
         std::vector<TreeNode> close_nodes;
         std::map<int, TreeNode> Tree_nodes;
 
+        std::vector<TreeNode> node_in_radius;
+
 
         TreeNode Nearest_node;
         TreeNode start;
         TreeNode goal;
         TreeNode newNode;
         TreeNode tempNode;
+
+        TreeNode best_parent_node;
 
         double dist_to_goal;
 
