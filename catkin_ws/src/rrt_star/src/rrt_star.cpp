@@ -142,7 +142,11 @@ void RRTStar::expandNearestNode()
 //       ROS_INFO("New_node In free space x y are %d %d",new_node_grid_x,new_node_grid_y);
        m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] = 100;
        m_map_pub.publish(m_map_new);
+<<<<<<< HEAD
+//       ros::Duration(0.05).sleep();
+=======
        ros::Duration(0.05).sleep();
+>>>>>>> 37af625706292b5d5836508d6333855bae7e58c7
        m_map_new.data[(m_map->info.width*rand_grid_pose_y + rand_grid_pose_x)] = 0;
        m_map_pub.publish(m_map_new);
 
