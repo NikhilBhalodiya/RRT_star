@@ -160,6 +160,19 @@ void RRTStar::expandNearestNode()
 
        getNeighboursInKRadius();
        getBestParent();
+        ROS_INFO("%d",node_in_radius.size());
+       if (! (isConnectionPossible(best_parent_node,newNode)))
+       {
+           std::vector<TreeNode>::iterator position = std::find(node_in_radius.begin(), node_in_radius.end(),best_parent_node);
+           if (position != node_in_radius.end())        // == myVector.end() means the element was not found
+           {
+               node_in_radius.erase(position);
+           }
+           ROS_INFO("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+           getBestParent();
+       }
+       ROS_INFO("%d",node_in_radius.size());
+
        newNode.parent_node = &best_parent_node;
        newNode.parent_id = best_parent_node.node_id;
        newNode.cost = best_parent_node.cost + distanceBetween(newNode,best_parent_node);
@@ -173,6 +186,51 @@ void RRTStar::expandNearestNode()
        removePointToMap(randomNode);
        generateRandomPoint();
    }
+}
+
+bool RRTStar::isConnectionPossible(TreeNode a, TreeNode b)
+{
+    double distance = distanceBetween(a,b);                                                                 // find the minimum ray_dist and put it instead of zero
+
+    for(double inc = 0.05; inc<=distance ; inc+=0.05)
+    {
+        double check_x = a.x_coordinate + inc* cos(angle);
+        double check_y = a.y_coordinate + inc* sin(angle);
+
+        int check_grid_x = int(check_x/m_map_new.info.resolution);
+        int check_grid_y = int(check_y/m_map_new.info.resolution);
+        if(check_grid_x != new_node_grid_x && check_grid_y != new_node_grid_y)
+        {
+            if(m_map_new.data[check_grid_y*m_map->info.width + check_grid_x] == 100)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void RRTStar::createNewNode()
@@ -239,7 +297,7 @@ void RRTStar::getBestParent()
 void RRTStar::getNeighboursInKRadius()
 {
     node_in_radius.clear();
-    radius = std::pow((std::log(node_num)/node_num),(1.0/dimention_of_spcae));
+    radius =1.0; // std::pow((std::log(node_num)/node_num),(1.0/dimention_of_spcae));
 
     for(const auto &check_node : open_nodes)
     {

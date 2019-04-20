@@ -16,8 +16,8 @@ namespace RRT {
 
         bool operator==(const TreeNode &rhs) const
         {
-            return (x_coordinate == rhs.x_coordinate) &&
-                   (y_coordinate == rhs.y_coordinate);
+            return (node_id == rhs.node_id) &&
+                   (parent_id == rhs.parent_id);
         }
 
     };

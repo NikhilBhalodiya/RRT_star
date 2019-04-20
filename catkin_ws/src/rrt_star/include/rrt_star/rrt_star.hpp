@@ -5,6 +5,7 @@
 #include <tf/transform_listener.h>
 #include <rrt_star_types.hpp>
 #include <nav_msgs/Path.h>
+#include <algorithm>
 
 namespace RRT {
 
@@ -46,6 +47,7 @@ namespace RRT {
         double angleBetween(TreeNode a, TreeNode b);
         void createNewNode();
         void removePointToMap(TreeNode node);
+        bool isConnectionPossible(TreeNode a, TreeNode b);
 
 
 
