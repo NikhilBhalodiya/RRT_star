@@ -63,7 +63,7 @@ namespace RRT {
         bool m_have_map;
         bool m_have_current_pose;
         bool once_flag=true;
-        bool first_time= false;
+        bool first_time= true;
         bool end_planning = false;
         
         int max_x_dist;
@@ -95,6 +95,8 @@ namespace RRT {
         int new_node_grid_y;
 
         double node_num;
+        int node_count;
+
         double angle;
         double goal_buffer = 0.1;
 
