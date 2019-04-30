@@ -17,13 +17,10 @@ RRTStar::~RRTStar(){}
 void RRTStar::planPath()
 {
                                                                                                     //ROS_INFO("Path planning has been started");
-
  drawStartAndGoal();
-
  while(!end_planning)
  {
     generateRandomPoint();
-
  }
 }
 
@@ -55,12 +52,10 @@ void RRTStar::initiateStartGoalNode()
 
     goal.x_coordinate = m_goal_pose.pose.position.x+10;
     goal.y_coordinate = m_goal_pose.pose.position.y+10;
-
 }
 
 void RRTStar::generateRandomPoint()
 {
-
 //    max_x_dist = (m_map->info.width*m_map->info.resolution) - 6;
 //    min_x_dist = (m_map->info.width*m_map->info.resolution) - 10;
 //    max_y_dist = (m_map->info.height*m_map->info.resolution) - 6;
@@ -89,7 +84,6 @@ void RRTStar::generateRandomPoint()
     {
         generateRandomPoint();
     }
-
 }
 
 void RRTStar::addPointToMap(TreeNode node)
@@ -100,7 +94,7 @@ void RRTStar::addPointToMap(TreeNode node)
     m_map_pub.publish(m_map_new);
 }
 
-void RRTStar::removePointToMap(TreeNode node)
+void RRTStar::removePointFromMap(TreeNode node)
 {
     int node_grid_x = int(node.x_coordinate/m_map->info.resolution);
     int node_grid_y = int(node.y_coordinate/m_map->info.resolution);
@@ -116,8 +110,7 @@ bool RRTStar::isInFreeSpace(TreeNode node)
 }
 
 void RRTStar::findNearestNode()
-{
-                                                                                            //ROS_INFO("started finding Nearest node");
+{                                                                                          //ROS_INFO("started finding Nearest node");
     dist_to_random_point = INFINITY;
     euclidean_distance = 0;
 
@@ -144,9 +137,12 @@ void RRTStar::expandNearestNode()
    angle = angleBetween(randomNode,Nearest_node);
    createNewNode();
 
-   if(checkIfItsGoal())
+   if(!end_planning)
    {
-       return;
+      if(checkIfItsGoal())
+      {
+          return;
+      }
    }
    if(checkIfThereIsObstacle())
    {
@@ -155,38 +151,54 @@ void RRTStar::expandNearestNode()
 
    if(isInFreeSpace(newNode))     // m_map_new.data[(m_map->info.width*new_node_grid_y + new_node_grid_x)] == 0)
    {
-       removePointToMap(randomNode);
+       removePointFromMap(randomNode);
        addPointToMap(newNode);
-
        getNeighboursInKRadius();
        getBestParent();
-        ROS_INFO("%d",node_in_radius.size());
-       if (! (isConnectionPossible(best_parent_node,newNode)))
+
+        int count = 0;
+        int size = node_in_radius.size();
+       while (!(isConnectionPossible(best_parent_node,newNode)))
        {
            std::vector<TreeNode>::iterator position = std::find(node_in_radius.begin(), node_in_radius.end(),best_parent_node);
            if (position != node_in_radius.end())        // == myVector.end() means the element was not found
            {
                node_in_radius.erase(position);
            }
-           ROS_INFO("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
-           getBestParent();
+          getBestParent();
+          count++;
+          if(count>=size)
+          {
+              break;
+          }
        }
-       ROS_INFO("%d",node_in_radius.size());
 
        newNode.parent_node = &best_parent_node;
        newNode.parent_id = best_parent_node.node_id;
        newNode.cost = best_parent_node.cost + distanceBetween(newNode,best_parent_node);
        reWireTheTree();
+//       reCalculateTheCost();
        open_nodes.push_back(newNode);
 
        Tree_nodes.insert({int(node_num),newNode});
    }
    else
    {
-       removePointToMap(randomNode);
+       removePointFromMap(randomNode);
        generateRandomPoint();
    }
 }
+
+void RRTStar::reCalculateTheCost()
+{
+    for(auto &node : open_nodes)
+    {
+        double new_cost = node.parent_node->cost + distanceBetween(*node.parent_node,node);
+        ROS_INFO("node Id %d old cost %IF new Cost %IF",node.node_id, node.cost,new_cost);
+        node.cost = new_cost;
+    }
+}
+
 
 bool RRTStar::isConnectionPossible(TreeNode a, TreeNode b)
 {
@@ -208,29 +220,6 @@ bool RRTStar::isConnectionPossible(TreeNode a, TreeNode b)
         }
     }
     return true;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 void RRTStar::createNewNode()
@@ -242,13 +231,11 @@ void RRTStar::createNewNode()
     new_node_grid_y = int(new_node_y/m_map->info.resolution);
 
     node_num++;
- // newNode.cost = Nearest_node.cost + 1.0;
     newNode.node_id = int(node_num);
     newNode.parent_id = Nearest_node.node_id;
     newNode.x_coordinate = new_node_x;
     newNode.y_coordinate = new_node_y;
     newNode.parent_node = &Nearest_node;
-    ROS_INFO("verifying new node id parent node parentid %d %d ",newNode.node_id,newNode.parent_node->node_id);
     newNode.cost =  Nearest_node.cost + distanceBetween(newNode,Nearest_node);
 }
 
@@ -272,12 +259,10 @@ void RRTStar::reWireTheTree()
 
 }
 
-
 double RRTStar::distanceBetween(const TreeNode &a,const TreeNode &b)
 {
   return std::sqrt(std::pow(a.x_coordinate - b.x_coordinate,2) + std::pow(a.y_coordinate - b.y_coordinate,2));
 }
-
 
 void RRTStar::getBestParent()
 {
@@ -297,7 +282,7 @@ void RRTStar::getBestParent()
 void RRTStar::getNeighboursInKRadius()
 {
     node_in_radius.clear();
-    radius =1.0; // std::pow((std::log(node_num)/node_num),(1.0/dimention_of_spcae));
+    radius =std::pow((std::log(node_num)/node_num),(1.0/dimention_of_spcae));
 
     for(const auto &check_node : open_nodes)
     {
@@ -366,7 +351,7 @@ bool RRTStar::checkIfItsGoal()
 
     if(dist_to_goal <= goal_buffer)
     {
-//      ROS_INFO("GGGGGGGOOOOOOOOOOOOOOOOOOOAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLl");
+        ROS_INFO("GGGGGGGOOOOOOOOOOOOOOOOOOOAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLl");
         goal.node_id = int(node_num) + 1;
         goal.parent_id = int(node_num);
         goal.parent_node = &newNode;
@@ -381,7 +366,7 @@ bool RRTStar::checkIfItsGoal()
 
 void RRTStar::backTraceThePath()
 {
-
+    path_of_nodes.clear();
      tempNode = *goal.parent_node;
      path_of_nodes.push_back(goal);
                                                                                         //     ROS_INFO("goal is now temp node and its id %d ",goal.node_id);
@@ -392,7 +377,7 @@ void RRTStar::backTraceThePath()
          tempNode = Tree_nodes[tempNode.parent_id];
      }
                                                                                          //     path_of_nodes.push_back(start);
-//     printFinalPath();
+     printFinalPath();
      publishPath();
 }
 
@@ -481,29 +466,16 @@ void RRTStar::GoalPoseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
        }
        else
        {
+         for(int num = 0; num<200; num++)
+         {
+          generateRandomPoint();
+         }
+         backTraceThePath();
 
 
        }
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

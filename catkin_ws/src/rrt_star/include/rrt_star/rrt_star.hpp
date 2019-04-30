@@ -46,8 +46,9 @@ namespace RRT {
         void createNearestNode(TreeNode check_node);
         double angleBetween(TreeNode a, TreeNode b);
         void createNewNode();
-        void removePointToMap(TreeNode node);
+        void removePointFromMap(TreeNode node);
         bool isConnectionPossible(TreeNode a, TreeNode b);
+        void reCalculateTheCost();
 
 
 
